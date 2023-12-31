@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+    id "com.google.protobuf" version "0.9.4"
+}
 
 apply plugin: 'com.android.application'
 
@@ -27,11 +30,54 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    sourceSets {
+        main {
+            java {
+                srcDirs += 'build/generated/source/proto/main/java'
+            }
+//            kotlin {
+//                srcDirs += 'build/generated/source/proto/main/kotlin'
+//            }
+            proto {
+                srcDir 'src/main/proto' // default value
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.20.1"
+    }
+    plugins {
+        javalite {
+            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+        }
+    }
+
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option 'lite'
+                }
+//                kotlin {
+//                    option 'lite'
+//                }
+            }
+        }
+    }
+}
+
 
 dependencies {
     implementation 'com.example.glass.ui:gesture-lib-sample:0.1.0-SNAPSHOT'
-
+    implementation 'com.google.protobuf:protobuf-javalite:3.20.1'
+    implementation 'com.google.protobuf:protobuf-kotlin-lite:3.20.1'
     //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'
