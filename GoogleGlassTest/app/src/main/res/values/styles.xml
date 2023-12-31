@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2019 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<resources>
+
+  <style name="AppTheme" parent="Theme.AppCompat.NoActionBar" />
+
+  <style name="CameraStyle">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">match_parent</item>
+    <item name="android:background">@android:color/black</item>
+  </style>
+
+  <style name="CameraPreviewStyle">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">match_parent</item>
+  </style>
+
+  <style name="IconStyle">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_margin">@dimen/icon_margin</item>
+    <item name="android:padding">@dimen/icon_padding</item>
+    <item name="android:alpha">0.8</item>
+  </style>
+
+  <style name="ShutterIconStyle" parent="IconStyle">
+    <item name="android:background">@drawable/shutter_transition</item>
+    <item name="android:src">@drawable/ic_camera_white</item>
+  </style>
+
+  <style name="VideoIconStyle" parent="IconStyle">
+    <item name="android:background">@drawable/video_transition</item>
+    <item name="android:src">@drawable/recording_transition</item>
+  </style>
+
+</resources>
