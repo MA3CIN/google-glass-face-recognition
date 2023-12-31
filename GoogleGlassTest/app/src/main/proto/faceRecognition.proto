@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option csharp_namespace = "FaceRecognition.gRPC.Web";
+
+package faceRecognition;
+
+// The faceRecognition service definition.
+service FaceRecognitionSvc {
+  // Sends a greeting
+  rpc PerformRecognition (stream BytesRequest) returns (RecognizedFaces);
+}
+
+// The request message containing the stream of bytes.
+message BytesRequest {
+  bytes data = 1;
+}
+
+// The response message containing stringified result of recognition.
+message RecognizedFaces {
+  string message = 1;
+}
