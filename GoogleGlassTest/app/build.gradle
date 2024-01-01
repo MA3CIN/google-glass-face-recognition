@@ -47,15 +47,20 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
+//    }
 }
 
 protobuf {
+//    generatedFilesBaseDir = "$projectDir/src/main/proto_gen"
     protoc {
-        artifact = "com.google.protobuf:protoc:3.20.1"
+        artifact = "com.google.protobuf:protoc:3.25.1"
     }
     plugins {
-        javalite {
-            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.60.1'
         }
     }
 
@@ -65,19 +70,26 @@ protobuf {
                 java {
                     option 'lite'
                 }
-//                kotlin {
-//                    option 'lite'
-//                }
+            }
+            task.plugins {
+                grpc {
+                    option 'lite'
+                }
             }
         }
     }
+
 }
 
 
 dependencies {
     implementation 'com.example.glass.ui:gesture-lib-sample:0.1.0-SNAPSHOT'
-    implementation 'com.google.protobuf:protobuf-javalite:3.20.1'
-    implementation 'com.google.protobuf:protobuf-kotlin-lite:3.20.1'
+
+    implementation 'io.grpc:grpc-okhttp:1.47.0'
+    implementation 'io.grpc:grpc-protobuf-lite:1.47.0'
+    implementation 'io.grpc:grpc-stub:1.47.0'
+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
     //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'
