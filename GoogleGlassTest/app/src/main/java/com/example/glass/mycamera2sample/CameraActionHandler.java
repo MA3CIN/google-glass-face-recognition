@@ -36,6 +36,8 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Surface;
 import android.widget.Toast;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -566,7 +568,11 @@ public class CameraActionHandler implements OnImageAvailableListener {
   @Override
   public void onImageAvailable(ImageReader reader) {
     Log.d(TAG, "Image is available");
-    FileManager.saveImage(context, reader);
+    try {
+      FileManager.saveImage(context, reader);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

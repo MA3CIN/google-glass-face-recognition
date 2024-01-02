@@ -25,11 +25,29 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+
+import com.google.protobuf.ByteString;
+
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Optional;
+
+import grpc.proto.faceRecog.FaceRecognition;
+import grpc.proto.faceRecog.FaceRecognitionSvcGrpc;
+import grpc.proto.faceRecog.FaceRecognition.RecognizedFaces;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
 
 /**
  * Provides functionality necessary to store data captured by the camera.
@@ -58,7 +76,7 @@ public class FileManager {
   /**
    * Stores given image from the {@link ImageReader} object, using {@link MediaStore}.
    */
-  public static void saveImage(final Context context, final ImageReader imageReader) {
+  public static void saveImage(final Context context, final ImageReader imageReader) throws IOException {
     Log.d(TAG, "Saving image");
     final Image image = imageReader.acquireNextImage();
     final ByteBuffer buffer = image.getPlanes()[0].getBuffer();
@@ -69,11 +87,57 @@ public class FileManager {
       MediaStore.Images.Media
           .insertImage(context.getContentResolver(), bitmap, null, null);
       Log.d(TAG, "Image inserted!");
+      Log.d(TAG, "Starting stream");
+      sendImageViaGRPC(bytes);
     } else {
       Log.d(TAG, "Bitmap is null");
     }
     image.close();
   }
+
+
+  public static void sendImageViaGRPC(final byte[] bytes) throws IOException {
+    // 10.0.2.2 for Emulated device, 127.0.0.1 if adb reverse works. DHCP dynamic otherwise
+    final String host = "10.0.2.2";
+    final int port = 5236;
+    ManagedChannel channel;
+    Log.d(TAG, "Tworze kanal");
+    try {
+      channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+      FaceRecognitionSvcGrpc.FaceRecognitionSvcStub grpc_stub = FaceRecognitionSvcGrpc.newStub(channel);
+      FaceRecognition.BytesRequest request = FaceRecognition.BytesRequest.newBuilder().setData(ByteString.copyFrom(bytes)).build();
+      StreamObserver<FaceRecognition.BytesRequest> recognitionRequestStreamObserver = grpc_stub.performRecognition(new FacesCallback());
+      // Probujemy wyslac
+      Log.d(TAG, "Proba wyslania");
+      recognitionRequestStreamObserver.onNext(request);
+
+      recognitionRequestStreamObserver.onCompleted();
+
+    } catch (Exception e){
+      Log.d(TAG, "Exception!");
+    }
+  }
+
+
+  private static class FacesCallback implements StreamObserver<RecognizedFaces> {
+
+    @Override
+    public void onNext(RecognizedFaces value) {
+      Log.d("tag", "Received faces!!"+value);
+
+    }
+
+    @Override
+    public void onError(Throwable cause) {
+      Log.d("tag", "ERROR!"+cause.toString()+cause.getMessage()+cause.getLocalizedMessage()+cause.hashCode());
+    }
+
+    @Override
+    public void onCompleted() {
+      Log.d("tag", "Completed!");
+    }
+  }
+
 
   /**
    * Refreshes file indexing for the {@link MediaStore}. It is necessary to see the recorded video
