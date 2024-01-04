@@ -31,11 +31,8 @@ import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -47,9 +44,7 @@ import grpc.proto.faceRecog.FaceRecognitionSvcGrpc;
 import grpc.proto.faceRecog.FaceRecognition.RecognizedFaces;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import android.util.Base64;
 
 /**
  * Provides functionality necessary to store data captured by the camera.
@@ -103,7 +98,7 @@ public class FileManager {
     final int port = 5236;
     ManagedChannel channel;
     // get file
-    Bitmap bm = BitmapFactory.decodeFile("/storage/self/primary/Pictures/1704153338682.jpg");
+    Bitmap bm = BitmapFactory.decodeFile(getLatestImageFromDir("/storage/self/primary/Pictures"));
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     bm.compress(Bitmap.CompressFormat.JPEG, 24, baos); // bm is the bitmap object
     byte[] b = baos.toByteArray();
@@ -125,12 +120,27 @@ public class FileManager {
     }
   }
 
+  private static String getLatestImageFromDir (String sdir) {
+    File dir = new File(sdir);
+    if (dir.isDirectory()) {
+      Optional<File> opFile = Arrays.stream(dir.listFiles(File::isFile))
+              .max((f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()));
+
+      if (opFile.isPresent()){
+        return opFile.get().getAbsolutePath();
+      }
+    }
+
+    Log.d(TAG, "Latest file not found!");
+    return null;
+  }
+
 
   private static class FacesCallback implements StreamObserver<RecognizedFaces> {
 
     @Override
     public void onNext(RecognizedFaces value) {
-      Log.d("tag", "Received faces!!"+value);
+      Log.d("tag", "Received faces!! "+value.toString());
 
     }
 
