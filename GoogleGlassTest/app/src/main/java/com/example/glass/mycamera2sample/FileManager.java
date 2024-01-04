@@ -28,6 +28,7 @@ import android.util.Log;
 
 import com.google.protobuf.ByteString;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,6 +49,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import android.util.Base64;
 
 /**
  * Provides functionality necessary to store data captured by the camera.
@@ -87,8 +89,7 @@ public class FileManager {
       MediaStore.Images.Media
           .insertImage(context.getContentResolver(), bitmap, null, null);
       Log.d(TAG, "Image inserted!");
-      Log.d(TAG, "Starting stream");
-      sendImageViaGRPC(bytes);
+      sendImageViaGRPC();
     } else {
       Log.d(TAG, "Bitmap is null");
     }
@@ -96,23 +97,29 @@ public class FileManager {
   }
 
 
-  public static void sendImageViaGRPC(final byte[] bytes) throws IOException {
+  public static void sendImageViaGRPC() throws IOException {
     // 10.0.2.2 for Emulated device, 127.0.0.1 if adb reverse works. DHCP dynamic otherwise
-    final String host = "10.0.2.2";
+    final String host = "127.0.0.1";
     final int port = 5236;
     ManagedChannel channel;
+    // get file
+    Bitmap bm = BitmapFactory.decodeFile("/storage/self/primary/Pictures/1704153338682.jpg");
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    bm.compress(Bitmap.CompressFormat.JPEG, 24, baos); // bm is the bitmap object
+    byte[] b = baos.toByteArray();
+
+
     Log.d(TAG, "Tworze kanal");
     try {
       channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
       FaceRecognitionSvcGrpc.FaceRecognitionSvcStub grpc_stub = FaceRecognitionSvcGrpc.newStub(channel);
-      FaceRecognition.BytesRequest request = FaceRecognition.BytesRequest.newBuilder().setData(ByteString.copyFrom(bytes)).build();
+      FaceRecognition.BytesRequest request = FaceRecognition.BytesRequest.newBuilder().setData(ByteString.copyFrom(b)).build();
       StreamObserver<FaceRecognition.BytesRequest> recognitionRequestStreamObserver = grpc_stub.performRecognition(new FacesCallback());
       // Probujemy wyslac
       Log.d(TAG, "Proba wyslania");
       recognitionRequestStreamObserver.onNext(request);
 
       recognitionRequestStreamObserver.onCompleted();
-
     } catch (Exception e){
       Log.d(TAG, "Exception!");
     }
@@ -129,7 +136,8 @@ public class FileManager {
 
     @Override
     public void onError(Throwable cause) {
-      Log.d("tag", "ERROR!"+cause.toString()+cause.getMessage()+cause.getLocalizedMessage()+cause.hashCode());
+      cause.printStackTrace();
+      Log.d("tag", "ERROR!");
     }
 
     @Override
