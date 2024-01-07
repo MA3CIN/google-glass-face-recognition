@@ -16,13 +16,22 @@ import android.webkit.WebViewClient;
 import com.example.glass.GlassGestureDetector.Gesture;
 import com.example.glass.GlassGestureDetector.OnGestureListener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements OnGestureListener {
 
 
     private GlassGestureDetector glassGestureDetector;
     private WebView myWebView;
+
+    private int siteCounter =0 ;
+
+    // adb reverse tcp:5005 tcp:5005    <--- Needed! + run web as http, without ssl!
+    private final String baseUrl = "http://localhost:5005/";
+
+
 
     private static final int REQUEST_CODE = 999;
 
@@ -38,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements OnGestureListener
         myWebView = (WebView) findViewById(R.id.webview);
         myWebView.setWebViewClient(new WebViewClient());
         myWebView.getSettings().setJavaScriptEnabled(true);
-        myWebView.loadUrl("https://www.elka.pw.edu.pl/");
+        myWebView.loadUrl(baseUrl);
     }
 
     @Override
@@ -49,29 +58,24 @@ public class MainActivity extends AppCompatActivity implements OnGestureListener
         }
     }
 
-    private void detectSpeech() {
-        final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        startActivityForResult(intent, REQUEST_CODE);
-    }
+    private void changeSite() {
+        Map<Integer, String> myMap = new HashMap<Integer, String>();
+        myMap.put(0, "");
+        myMap.put(1, "Create");
+        myMap.put(2, "Recognize");
+        myMap.put(3, "List");
+        myMap.put(4, "Statistics");
 
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == RESULT_OK) {
-            final List<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            Log.d("app", "results: " + results.toString());
-            if (results != null && results.size() > 0 && !results.get(0).isEmpty()) {
-                String speechResult = results.get(0);
-                myWebView.loadUrl("http://www.google.com/search?q=" + speechResult);
-                Log.d("app", speechResult);
-            }
+        if (siteCounter == 4){
+            siteCounter = 0;
+            myWebView.loadUrl(baseUrl);
         } else {
-            Log.d("app", "Result not OK");
+            siteCounter ++;
+            Log.d("TAG", baseUrl + "People/" + myMap.get(siteCounter));
+            myWebView.loadUrl(baseUrl + "People/" + myMap.get(siteCounter));
         }
+
+
     }
 
     private void hideSystemUI() {
@@ -103,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements OnGestureListener
                 return true;
             case TAP:
                 Log.d("App", "TAPPED!");
-                detectSpeech();
+                changeSite();
                 return true;
             case SWIPE_FORWARD:
                 Log.d("App", "swipe forward");
@@ -114,9 +118,7 @@ public class MainActivity extends AppCompatActivity implements OnGestureListener
                 myWebView.scrollBy(0, -scrollSpeed);
                 return true;
             case TWO_FINGER_SWIPE_FORWARD:
-                Log.d("App", "double forward");
-                simulateClick((float) myWebView.getWidth() /4, (float) myWebView.getHeight() /2);
-                return true;
+                Log.d("App", "double forward - functionality disabled");
             case TWO_FINGER_SWIPE_BACKWARD:
                 Log.d("App", "double backward");
                 myWebView.goBack();
@@ -126,29 +128,4 @@ public class MainActivity extends AppCompatActivity implements OnGestureListener
         }
     }
 
-    private void simulateClick(float x, float y) {
-        long downTime = SystemClock.uptimeMillis();
-        long eventTime = SystemClock.uptimeMillis();
-        MotionEvent.PointerProperties[] properties = new MotionEvent.PointerProperties[1];
-        MotionEvent.PointerProperties pp1 = new MotionEvent.PointerProperties();
-        pp1.id = 0;
-        pp1.toolType = MotionEvent.TOOL_TYPE_FINGER;
-        properties[0] = pp1;
-        MotionEvent.PointerCoords[] pointerCoords = new MotionEvent.PointerCoords[1];
-        MotionEvent.PointerCoords pc1 = new MotionEvent.PointerCoords();
-        pc1.x = x;
-        pc1.y = y;
-        pc1.pressure = 1;
-        pc1.size = 1;
-        pointerCoords[0] = pc1;
-        MotionEvent motionEvent = MotionEvent.obtain(downTime, eventTime,
-                MotionEvent.ACTION_DOWN, 1, properties,
-                pointerCoords, 0,  0, 1, 1, 0, 0, 0, 0 );
-        dispatchTouchEvent(motionEvent);
-
-        motionEvent = MotionEvent.obtain(downTime, eventTime,
-                MotionEvent.ACTION_UP, 1, properties,
-                pointerCoords, 0,  0, 1, 1, 0, 0, 0, 0 );
-        dispatchTouchEvent(motionEvent);
-    }
 }
