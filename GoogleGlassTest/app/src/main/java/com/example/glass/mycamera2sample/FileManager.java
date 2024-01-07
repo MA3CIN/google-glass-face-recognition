@@ -25,6 +25,7 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.protobuf.ByteString;
 
@@ -32,7 +33,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -84,7 +84,7 @@ public class FileManager {
       MediaStore.Images.Media
           .insertImage(context.getContentResolver(), bitmap, null, null);
       Log.d(TAG, "Image inserted!");
-      sendImageViaGRPC();
+      sendImageViaGRPC(context);
     } else {
       Log.d(TAG, "Bitmap is null");
     }
@@ -92,7 +92,7 @@ public class FileManager {
   }
 
 
-  public static void sendImageViaGRPC() throws IOException {
+  public static void sendImageViaGRPC(Context context) {
     // 10.0.2.2 for Emulated device, 127.0.0.1 if adb reverse works. DHCP dynamic otherwise
     final String host = "127.0.0.1";
     final int port = 5236;
@@ -100,23 +100,26 @@ public class FileManager {
     // get file
     Bitmap bm = BitmapFactory.decodeFile(getLatestImageFromDir("/storage/self/primary/Pictures"));
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    bm.compress(Bitmap.CompressFormat.JPEG, 24, baos); // bm is the bitmap object
+    bm.compress(Bitmap.CompressFormat.JPEG, 60, baos);
     byte[] b = baos.toByteArray();
 
-
-    Log.d(TAG, "Tworze kanal");
+    Log.d(TAG, "Creating channel");
     try {
       channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+
       FaceRecognitionSvcGrpc.FaceRecognitionSvcStub grpc_stub = FaceRecognitionSvcGrpc.newStub(channel);
       FaceRecognition.BytesRequest request = FaceRecognition.BytesRequest.newBuilder().setData(ByteString.copyFrom(b)).build();
       StreamObserver<FaceRecognition.BytesRequest> recognitionRequestStreamObserver = grpc_stub.performRecognition(new FacesCallback());
-      // Probujemy wyslac
-      Log.d(TAG, "Proba wyslania");
+
+      Log.d(TAG, "Sending image");
+      Toast.makeText(context, "Sending image", Toast.LENGTH_SHORT).show();
       recognitionRequestStreamObserver.onNext(request);
 
       recognitionRequestStreamObserver.onCompleted();
+      Toast.makeText(context, "Image sent", Toast.LENGTH_SHORT).show();
     } catch (Exception e){
       Log.d(TAG, "Exception!");
+      Toast.makeText(context, "Communication error!", Toast.LENGTH_SHORT).show();
     }
   }
 
