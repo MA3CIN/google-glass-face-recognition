@@ -1,5 +1,5 @@
 # Google glass face recognition
-This repository contains the java code for Androind, to be ran on Google Glass Enterprise Edition 2 (GGEE2), to provide the face recognition service.
+This repository contains the java code for Android, to be ran on Google Glass Enterprise Edition 2 (GGEE2), to provide the face recognition service.
 
 ![GGEE2 communication schema](GGEE2_Schema.png)
 
